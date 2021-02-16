@@ -24,19 +24,26 @@ class Cluster:
         self.Name = Name
         self.Value = 0
 
-    def loadFromJSON(self, jsonString):
+    def loadFromJSON(self, jsonString, exclude = None):
         dataset = json.loads(jsonString)
         self.Name = dataset['Cluster']['Name']
 
         for item in dataset['Cluster']['Sets']:
+            Name = item['Name']
+            try:
+                if Name in exclude:
+                    # print("Excluded:", Name)
+                    continue    
+            except:
+                pass
             subSet = Set(item['Name'])
             for point in item['Points']:
                 subSet.AddPoint(point['x'],point['y'])
             self.append(subSet)
 
-    def loadFromFile(self, filename):
+    def loadFromFile(self, filename, exclude = None):
         file = open(filename, "r")
-        self.loadFromJSON(file.read())
+        self.loadFromJSON(file.read(),exclude)
 
     def append(self, FuzzySet):
         self.Sets[FuzzySet.Name] = FuzzySet
@@ -70,18 +77,41 @@ class Cluster:
                 maxValue = Fuzzyset
                 output = Fuzzyset.Name
         return output
-            
-    def ToCrisp(self):
+    
+    # Singleton 
+    def Sugeno(self):
+        output = 0.0
+        Upper = 0.0
+        Lower = 0.0
+
+        for Fuzzyset in self.Sets.values():
+            print(Fuzzyset.Name, ":", Fuzzyset.Dom, " U:", Upper, " L:", Lower)
+            if Fuzzyset.Dom > 0:
+                Upper += Fuzzyset.Dom * Fuzzyset.WorkValue
+                Lower += Fuzzyset.Dom
+        if (Upper > 0) & (Lower > 0):
+            output = Upper/Lower
+
+        return output
+
+    # Centre of gravity Calculation
+    # mamdani method
+    def Mamdani(self):
         output = 0.0
         UpperSum = 0.0
         LowerSum = 0.0
 
         for Fuzzyset in self.Sets.values():
-            UpperSum += Fuzzyset.UpperSum
-            LowerSum += Fuzzyset.LowerSum
+            UpperSum += Fuzzyset.UpperSum()
+            LowerSum += Fuzzyset.LowerSum()
         if ( UpperSum > 0 ) & (LowerSum > 0):
+            # print("sum", UpperSum, " lSum:", LowerSum, " output:" , (UpperSum/LowerSum))
             output = UpperSum/LowerSum
         return output
+
+    def ToCrisp(self):
+        # return self.Mamdani()
+        return self.Sugeno()
 
 
 class Set:
@@ -120,23 +150,50 @@ class Set:
         output = 0.0
         for pt in self.Points:
             output += pt.x * min(pt.y, self.WorkValue)
+            # output += pt.x * pt.y
+
+            # print("UpperSum: ", output, " pt.y:",pt.y, " self.WorkVal:", self.WorkValue)
+
+        # print(self.Name, " UpperSum:" , output)
         return output
     
     def LowerSum(self):
         output = 0.0
         for pt in self.Points:
             output +=  min(pt.y, self.WorkValue)
+            #output +=  pt.y
+            
+            # print("LowerSum: ", output, " pt.y:",pt.y, " self.WorkVal:", self.WorkValue)
+        # print(self.Name, " LowerSum:" , output)
         return output
 
     def Weight(self):
-        return self.UpperSum()/self.LowerSum()
-    
-    def ToCrisp(self):
         upper = self.UpperSum()
         lower = self.LowerSum()
         output = 0.0
         if ( upper > 0) & (lower > 0):
             output = upper/lower
+        return output
+    
+    def Translate(self, val):
+        output = 0.0
+        if  len(self.Points) > 0 :
+            if val > self.Points[-1].y:
+                output = self.Points[-1].x
+                return output
+            elif val < self.Points[0].y:
+                output = self.Points[-1].x
+                self.Dom = output
+                return output
+        previous = self.Points[0]
+        for pt in self.Points:
+            if val > pt.y:
+                previous = pt
+            elif val <= pt.y:
+                if previous == pt:
+                    return output
+                output = self.Interpolater.Linear(val, previous.y, previous.x , pt.y, pt.x )
+                return output
         return output
 
     def CalculateDom(self):

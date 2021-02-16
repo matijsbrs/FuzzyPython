@@ -1,0 +1,15 @@
+{
+    "Name": "Weather Algo",
+    "Desc": "Descrption here",
+    "Clusters" : [
+        {
+            "filename" : "Wind.json",
+            "excludes" : ["Wind7","Wind8"]
+        },{
+            "filename" : "WindDefinitions.json"
+        }
+    ],
+    "Rules" : [
+        {"A":"a"}
+    ]
+}
