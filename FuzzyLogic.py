@@ -96,7 +96,7 @@ class Cluster:
 
     # Centre of gravity Calculation
     # mamdani method
-    def Mamdani(self):
+    def Mamdani_original(self):
         output = 0.0
         UpperSum = 0.0
         LowerSum = 0.0
@@ -108,10 +108,24 @@ class Cluster:
             # print("sum", UpperSum, " lSum:", LowerSum, " output:" , (UpperSum/LowerSum))
             output = UpperSum/LowerSum
         return output
+    
+    def Mamdani(self):
+        output = 0.0
+        UpperSum = 0.0
+        LowerSum = 0.0
+
+        for Fuzzyset in self.Sets.values():
+            if Fuzzyset.Dom > 0:
+                UpperSum += (Fuzzyset.Sum() * Fuzzyset.Consequent )
+                LowerSum += Fuzzyset.Consequent * len(Fuzzyset.Points)
+        if ( UpperSum > 0 ) & (LowerSum > 0):
+            print(self.Name,".sum", UpperSum, " lSum:", LowerSum, " output:" , (UpperSum/LowerSum))
+            output = UpperSum/LowerSum
+        return output
 
     def ToCrisp(self):
-        # return self.Mamdani()
-        return self.Sugeno()
+        return self.Mamdani()
+        # return self.Sugeno()
 
 
 class Set:
@@ -120,6 +134,7 @@ class Set:
         self.Name = Name
         self.WorkValue = 0.0
         self.Dom = 0.0
+        self.Consequent = 0.0
         self.Interpolater = Interpolate()
 
     def __and__(self, other):
@@ -144,24 +159,31 @@ class Set:
     def Input(self, value):
         self.WorkValue = value
         self.CalculateDom()
+        # print(self.Name, ".input(",value,"): ", self.CalculateDom())
         return self.WorkValue
     
+    def Evaluate(self, value):
+        self.Consequent = 0.0
+        self.Consequent = self.Translate(value)
+        return self.Consequent
+
+    def Sum(self):
+        output = 0.0
+        for pt in self.Points:
+            output += pt.x
+        return output
+
     def UpperSum(self):
         output = 0.0
         for pt in self.Points:
             output += pt.x * min(pt.y, self.WorkValue)
-            # output += pt.x * pt.y
-
-            # print("UpperSum: ", output, " pt.y:",pt.y, " self.WorkVal:", self.WorkValue)
-
-        # print(self.Name, " UpperSum:" , output)
         return output
     
     def LowerSum(self):
         output = 0.0
         for pt in self.Points:
             output +=  min(pt.y, self.WorkValue)
-            #output +=  pt.y
+            # output +=  pt.y
             
             # print("LowerSum: ", output, " pt.y:",pt.y, " self.WorkVal:", self.WorkValue)
         # print(self.Name, " LowerSum:" , output)
@@ -175,7 +197,9 @@ class Set:
             output = upper/lower
         return output
     
-    def Translate(self, val):
+    def Translate(self, val=None):
+        if val == None:
+            val = self.WorkValue
         output = 0.0
         if  len(self.Points) > 0 :
             if val > self.Points[-1].y:

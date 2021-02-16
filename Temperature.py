@@ -21,28 +21,21 @@ WindSnelheid = 4.9 # Meter / sec
 
 for TempIn in range(-9,21,3):
     Cluster.Input(TempIn)
-    Wind.Input(WindSnelheid)
-
-    WindComp = Wind.get('Wind5')
-    CVComp.get('Wind').Input(WindComp.Dom)
-    # print("WindComp: ", WindComp.Dom, " comp:", CVComp.get('Wind').Translate(WindComp.Dom))
-    WindCompValue = CVComp.get('Wind').Translate(WindComp.Dom)
-
+    
     StokenHoog = Cluster.get('Koud')
     StokenLaag = Cluster.get('Warm')
     
-    CV.get('Hoog').Input(StokenHoog.Dom)
-    CV.get('Laag').Input(StokenLaag.Dom)
+    CV.get('Hoog').Evaluate(StokenHoog.Dom)
+    CV.get('Laag').Evaluate(StokenLaag.Dom)
     
-
-    # print (  "T: ", TempIn, "\tLow:", round(StokenLaag.Dom,2), " \tMidden:", round(StokenMidden.Dom,2) ," \tHigh:", round(StokenHoog.Dom,2) )
+    print (  "T: ", TempIn, "\tLow:", round(StokenLaag.Dom,2)," \tHigh:", round(StokenHoog.Dom,2) )
     # [print(item.Name, " DOM:", item.Dom ) for item in Cluster.Sets.values() ]
-    print ( "T: ", TempIn, "\t CV: ", round(CV.ToCrisp(),2), "\t Final advice:", round(CV.ToCrisp()+WindCompValue,2) )
+    print ( "T: ", TempIn, "\t CV: ", round(CV.ToCrisp(),2), "\t Final advice:", round(CV.ToCrisp(),2) )
     # [print(item.Name, " DOM:", item.Dom ) for item in Wind.Sets.values() ]
     # print ("")
 
 
-[print(item.Name, " DOM:", item.Dom ) for item in Wind.Sets.values() ]
+# [print(item.Name, " DOM:", item.Dom ) for item in Wind.Sets.values() ]
 
 # for WindSnelheid in range (0,5):
 #     Wind.Input(WindSnelheid)
