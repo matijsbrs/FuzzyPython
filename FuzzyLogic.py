@@ -115,12 +115,13 @@ class Cluster:
         LowerSum = 0.0
 
         for Fuzzyset in self.Sets.values():
-            if Fuzzyset.Dom > 0:
+            if Fuzzyset.Consequent > 0:
                 UpperSum += (Fuzzyset.Sum() * Fuzzyset.Consequent )
                 LowerSum += Fuzzyset.Consequent * len(Fuzzyset.Points)
         if ( UpperSum > 0 ) & (LowerSum > 0):
-            print(self.Name,".sum", UpperSum, " lSum:", LowerSum, " output:" , (UpperSum/LowerSum))
+            # print(UpperSum, " lSum:", LowerSum, " output:" , (UpperSum/LowerSum))
             output = UpperSum/LowerSum
+        
         return output
 
     def ToCrisp(self):
@@ -147,6 +148,12 @@ class Set:
         result.Dom = max(self.Dom, other.Dom)
         return result
 
+    def __add__(self, other):
+        result = Set(self.Name + "+" + other.Name)
+        result.Dom = min(1, (self.Dom + other.Dom))
+        # print("add",result.Name, " ", self.Dom, " + ", other.Dom, "=",result.Dom)
+        return result
+
     def __invert__(self):
         result = Set("!" + self.Name)
         result.Dom = 1 - self.Dom
@@ -159,12 +166,10 @@ class Set:
     def Input(self, value):
         self.WorkValue = value
         self.CalculateDom()
-        # print(self.Name, ".input(",value,"): ", self.CalculateDom())
         return self.WorkValue
     
     def Evaluate(self, value):
-        self.Consequent = 0.0
-        self.Consequent = self.Translate(value)
+        self.Consequent = value
         return self.Consequent
 
     def Sum(self):
@@ -172,52 +177,17 @@ class Set:
         for pt in self.Points:
             output += pt.x
         return output
-
+    
     def UpperSum(self):
         output = 0.0
         for pt in self.Points:
-            output += pt.x * min(pt.y, self.WorkValue)
+            output += pt.x * min(pt.y, self.Dom)
         return output
     
     def LowerSum(self):
         output = 0.0
         for pt in self.Points:
-            output +=  min(pt.y, self.WorkValue)
-            # output +=  pt.y
-            
-            # print("LowerSum: ", output, " pt.y:",pt.y, " self.WorkVal:", self.WorkValue)
-        # print(self.Name, " LowerSum:" , output)
-        return output
-
-    def Weight(self):
-        upper = self.UpperSum()
-        lower = self.LowerSum()
-        output = 0.0
-        if ( upper > 0) & (lower > 0):
-            output = upper/lower
-        return output
-    
-    def Translate(self, val=None):
-        if val == None:
-            val = self.WorkValue
-        output = 0.0
-        if  len(self.Points) > 0 :
-            if val > self.Points[-1].y:
-                output = self.Points[-1].x
-                return output
-            elif val < self.Points[0].y:
-                output = self.Points[-1].x
-                self.Dom = output
-                return output
-        previous = self.Points[0]
-        for pt in self.Points:
-            if val > pt.y:
-                previous = pt
-            elif val <= pt.y:
-                if previous == pt:
-                    return output
-                output = self.Interpolater.Linear(val, previous.y, previous.x , pt.y, pt.x )
-                return output
+            output += min(pt.y, self.Dom)
         return output
 
     def CalculateDom(self):

@@ -17,20 +17,28 @@ Wind.loadFromFile("./Wind.json")
 Cluster = FuzzyLogic.Cluster("")
 Cluster.loadFromFile("./Temperatures.2.json")
 
-WindSnelheid = 4.9 # Meter / sec
+WindSnelheid = 0.2 # Meter / sec
 
-for TempIn in range(-9,21,3):
+for TempIn in range(-9,22,3):
     Cluster.Input(TempIn)
     
-    StokenHoog = Cluster.get('Koud')
-    StokenLaag = Cluster.get('Warm')
+    Wind.Input(WindSnelheid)
+
+    StokenHoog      = Cluster.get('Vorst')
+    StokenMidden    = Cluster.get('Koud')
+    StokenLaag      = Cluster.get('Warm')
     
     CV.get('Hoog').Evaluate(StokenHoog.Dom)
+    CV.get('Midden').Evaluate(StokenMidden.Dom)
     CV.get('Laag').Evaluate(StokenLaag.Dom)
-    
-    print (  "T: ", TempIn, "\tLow:", round(StokenLaag.Dom,2)," \tHigh:", round(StokenHoog.Dom,2) )
+
+    print(Wind.get('Wind5').Dom)
+    CVComp.get('Wind').Evaluate(Wind.get('Wind5').Dom)
+
+
+    # print (  "T: ", TempIn, "\tLow:", round(StokenLaag.Dom,2)," \tMid:", round(StokenMidden.Dom,2)," \tHigh:", round(StokenHoog.Dom,2) )
     # [print(item.Name, " DOM:", item.Dom ) for item in Cluster.Sets.values() ]
-    print ( "T: ", TempIn, "\t CV: ", round(CV.ToCrisp(),2), "\t Final advice:", round(CV.ToCrisp(),2) )
+    print ( "T: ", TempIn, "\t CV: ", round(CV.ToCrisp(),1), " \t WindComp: ", round(CVComp.ToCrisp(),3), " Final:", round(CV.ToCrisp()*CVComp.ToCrisp(),3) )
     # [print(item.Name, " DOM:", item.Dom ) for item in Wind.Sets.values() ]
     # print ("")
 
