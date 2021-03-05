@@ -1,8 +1,10 @@
 from os import get_inheritable
 import re
 
+
+
 ruleLine = "long+(short+extended_a)"
-rules = ["1*2+c*d"]
+rules = ["1*(2+(4+8))*10"]
 
 rule = re.split(r"(\W)",ruleLine)
 
@@ -66,14 +68,48 @@ def isConst(field):
         return True
     return False
 
-def FindExpr(s, start = 0 , end = 0, depth = 0):
-    expressions = ['+','-','*',':','|','&']
+def FindBracket(s,depth = 0, pos = 0, end = 0):
     brackets = ['(',')']
+    start = -1
+    pre = str(depth)*(depth+1)
+    for pos in range(pos, len(s)):
+        expr = s[pos]
+        if expr in brackets:
+            if expr == '(':
+                if start < 0 : start = pos+1
+                depth += 1
+                print(pre, "\str:{}\t s:{}".format(start,s[start:]))
+                # result = FindBracket(s,pos = pos+1, open = open, start = start)
+                # print (pre, "result:" + result + " " + str(start) )
+                # return result
+            elif expr == ')':
+                depth -= 1
+
+                end = pos
+                if ( depth == 0 ):
+                    print(pre, "/from:{}\t to:{}\t s:{}\t -> {}".format(start,end,s,s[start:end]))
+                    # return FindBracket(s[start:end] )
+                    return s[start:end]
+
+
+def FindExpr(s, start = 0 , end = 0, depth = 0):
+    expressions = ['+','-','*',':','|','&','(',')']
     pos = 0
     for expr in s:
         left  = s[:pos]
         right = s[pos+1:]
         opr   = s[pos:pos+1]
+
+        if right[:1] == "(":
+            left = FindBracket(right)
+            if FindBracket(left) is not None:
+                opr = right[len(left)+2]
+                right = right[len(left)+3:]
+            
+            print("( opr: {}".format(opr))
+            print("( lft: {}".format(left))
+            print("( rgt: {}".format(right))
+            
 
         if expr in expressions:
             
@@ -87,16 +123,19 @@ def FindExpr(s, start = 0 , end = 0, depth = 0):
             LIsExpr     = isExpr(left)
 
 
+
             print("%")
             print(" Opr:{}\t".format(opr))
-            print(" lft:{}\tv{}\tc{}\te{}".format(left,isVar(left),isConst(left),isExpr(left)))
-            print(" rgt:{}\tv{}\tc{}\te{}".format(right,isVar(right),isConst(right),isExpr(right)))
+            print(" lft:{}\n\tv:{}\tc:{}\te:{}\n".format(left,isVar(left),isConst(left),isExpr(left)))
+            print(" rgt:{}\n\tv:{}\tc:{}\te:{}\n".format(right,isVar(right),isConst(right),isExpr(right)))
             
 
             Raction = ""
             if RIsVar:
+                # Raction = Var(right)
                 Raction = "Var({})".format(right)
             elif RIsConst:
+                # Const(right)
                 Raction = "Const({})".format(right)
             elif RIsExpr:
                 # Raction = FindExpr(right)
@@ -133,14 +172,9 @@ def FindExpr(s, start = 0 , end = 0, depth = 0):
             
             return action
 
-        elif expr in brackets:
-            if expr == "(" :
-                depth += 1
-            else :
-                depth -= 1
-            
-            print("*"*(depth))
-            return FindExpr(s[pos+1:],depth=depth)
+        # elif expr in brackets:
+           
+            # return FindExpr(FindBracket(s[pos:]))
            
 
         pos += 1
@@ -148,13 +182,14 @@ def FindExpr(s, start = 0 , end = 0, depth = 0):
 
 env = { "a" : 2, "b" : 4, "c" : 5, "d" : 3}
 for s in rules:
-    # print("s:'{}'\t\t -> {}".format(s,getBrackets(s)))
-    print("s:'{}'\t\t -> {}".format(s,FindExpr(s) ))
-    # print("{}: {}".format(s,rulesplit(s)))
+    # print("s:'{}'\t\t -> {}".format(s,FindBracket(s)))
+    print("s:'{}'\t\t -> {}".format(s,FindExpr(s)) )
     # print(parts)
     print("---")
 
+
+
 # calculator example:
-# env = { "x" : 2, "y" : 4, "z" : 2}
-# e1 = Times(Var("z"), Add(Var("y"),Var("x")) )
-# print(e1)
+env = { "x" : 3, "y" : 4, "z" : 2}
+e1 = Times(Var("z"), Add(Var("y"),Var("x")) )
+print(e1.eval(env)) 
