@@ -6,3 +6,6 @@ I made this code to learn Pyhton and I want to automate
 the control of my thermostat. 
 The fuzzy sets can be loaded from a JSON file. 
 in the future I plan to also add stuf
+
+Adding support for external rule file. 
+
