@@ -78,7 +78,7 @@ def FindBracket(s,depth = 0, pos = 0, end = 0):
             if expr == '(':
                 if start < 0 : start = pos+1
                 depth += 1
-                print(pre, "\str:{}\t s:{}".format(start,s[start:]))
+                # print(pre, "\str:{}\t s:{}".format(start,s[start:]))
                 # result = FindBracket(s,pos = pos+1, open = open, start = start)
                 # print (pre, "result:" + result + " " + str(start) )
                 # return result
@@ -87,7 +87,7 @@ def FindBracket(s,depth = 0, pos = 0, end = 0):
 
                 end = pos
                 if ( depth == 0 ):
-                    print(pre, "/from:{}\t to:{}\t s:{}\t -> {}".format(start,end,s,s[start:end]))
+                    # print(pre, "/from:{}\t to:{}\t s:{}\t -> {}".format(start,end,s,s[start:end]))
                     # return FindBracket(s[start:end] )
                     return s[start:end]
 
@@ -123,7 +123,6 @@ def FindExpr(s, start = 0 , end = 0, depth = 0):
             LIsExpr     = isExpr(left)
 
 
-
             print("%")
             print(" Opr:{}\t".format(opr))
             print(" lft:{}\n\tv:{}\tc:{}\te:{}\n".format(left,isVar(left),isConst(left),isExpr(left)))
@@ -153,7 +152,7 @@ def FindExpr(s, start = 0 , end = 0, depth = 0):
             elif LIsExpr:
                 # Laction = FindExpr(left)
                 left = FindExpr(left)
-                Laction = "Expr({})".format(left)
+                Laction = "{}".format(left)
                 # start nesting from here. 
             
 
