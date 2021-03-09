@@ -5,7 +5,7 @@ import re
 
 ruleLine = "long+(short+extended_a)"
 # rules = ["1*(2+(4+8)+9)*10"]
-rules = ["a*(b+(c+d)+e)*f"]
+rules = ["a+a*(b+(c+d)+e)*f"]
 
 
 rule = re.split(r"(\W)",ruleLine)
@@ -100,8 +100,6 @@ def FindBracket(s,depth = 0, pos = 0, end = 0):
                     return s[start:end]
 
 def Qualify(Input):
-    if Input == 'd':
-        print ("Special D")
     if isinstance(Input,Expr):
         return Input
     if isVar(Input):
@@ -134,14 +132,6 @@ def FindExpr(s, start = 0 , end = 0, depth = 0):
         right = s[pos+1:]
         opr   = s[pos:pos+1]
 
-        # RIsVar      = isVar(right)
-        # RIsConst    = isConst(right)
-        # RIsExpr     = isExpr(right)
-
-        # LIsVar      = isVar(left)
-        # LIsConst    = isConst(left)
-        # LIsExpr     = isExpr(left)
-
         if right[:1] == "(":
             SubExpr = FindBracket(right)
             SubExprLen = len(SubExpr)
@@ -150,7 +140,6 @@ def FindExpr(s, start = 0 , end = 0, depth = 0):
             if SubExprLen < rightLen:
                 llen = SubExprLen + 3
                 rlen = (rightLen - (llen))*-1
-                # print ("L_leftpart: {} \t{}\t {} right part".format(SubExpr,opr,right[llen:]))
                 # Find The operation
                 opr = right[SubExprLen+2]
                 
@@ -158,11 +147,7 @@ def FindExpr(s, start = 0 , end = 0, depth = 0):
                 wrkLeft = Qualify(right[rlen:])
                 # Store operation
                 right = Qualify(Operator(opr,wrkLeft, wrkRight ))
-                print("Type: ", str(type(right)))
-                # Within braces Qualify Right as Expression
-                # RIsVar = isVar(right)
-                # RIsConst = isConst(right)
-                # RIsExpr = isExpr(right)
+
 
         if left[:1] == "(":
             SubExpr = FindBracket(left)
@@ -182,48 +167,8 @@ def FindExpr(s, start = 0 , end = 0, depth = 0):
             print("( lft: {}".format(left))
             print("( rgt: {}".format(right))
 
-            if right is 'd':
-                print("special:{}\n\tv:{}\tc:{}\te:{}\n".format(right,isVar(right),isConst(right),isExpr(right)))
-
-
-
-            # print("%")
-            # print(" Opr:{}\t".format(opr))
-            # print(" lft:{}\n\tv:{}\tc:{}\te:{}\n".format(left,isVar(left),isConst(left),isExpr(left)))
-            # print(" rgt:{}\n\tv:{}\tc:{}\te:{}\n".format(right,isVar(right),isConst(right),isExpr(right)))
-            
-            # Raction = ""
-            # if RIsVar:
-            #     Raction = Var(right)
-            #     # Raction = "Var({})".format(right)
-            # elif RIsConst:
-            #     Raction = Const(right)
-            #     # Raction = "Const({})".format(right)
-            # elif RIsExpr:
-            #     # Raction = FindExpr(right)
-                # if right[:1] == '(':
-                #     SubExpr = FindBracket(right)
-                #     if len(SubExpr) < len(right):
-                #         print ("leftpart: {} \t {} right part".format(SubExpr,right[len(SubExpr)+2:]))
-                # right = FindExpr(right)
-                # Raction = "{}".format(right)
-                # Raction = Qualify(right)
-
-            # Laction = ""
-            # if LIsVar:
-            #     Laction = Var(left)
-            #     # Laction = "Var({})".format(left)
-            # elif LIsConst:
-            #     Laction = Const(left)
-            #     # Laction = "Const({})".format(left)
-            # elif LIsExpr:
-            #     # Laction = FindExpr(left)
-            #     # left = FindExpr(left)
-            #     # Laction = "{}".format(left)
-            #     Laction = Qualify(left)
-                # start nesting from here. 
-            
-
+            if isExpr(right):
+                right = FindExpr(right)
             action = Operator(opr,Qualify(left),Qualify(right))
            
             return action
