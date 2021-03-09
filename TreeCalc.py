@@ -4,7 +4,9 @@ import re
 
 
 ruleLine = "long+(short+extended_a)"
-rules = ["1*(2+(4+8))*10"]
+# rules = ["1*(2+(4+8)+9)*10"]
+rules = ["a*(b+(c+d)+e)*f"]
+
 
 rule = re.split(r"(\W)",ruleLine)
 
@@ -54,16 +56,22 @@ class Var (Expr):
         return env[self.name]
 
 def isExpr(field) :
+    if not isinstance(field,str):
+        return False
     if re.search("[\+\-\*\:\|\&\!\^]", field) :
         return True
     return False
 
 def isVar(field) :
+    # if isinstance(field,Expr):
+    #     return False
     if re.search("^[a-zA-Z]", field) and not isExpr(field) : 
         return True
     return False
 
 def isConst(field):
+    # if isinstance(field,Expr):
+    #     return False
     if re.search("^([-+]|[0-9])", field) and not isExpr(field) : 
         return True
     return False
@@ -91,98 +99,141 @@ def FindBracket(s,depth = 0, pos = 0, end = 0):
                     # return FindBracket(s[start:end] )
                     return s[start:end]
 
+def Qualify(Input):
+    if Input == 'd':
+        print ("Special D")
+    if isinstance(Input,Expr):
+        return Input
+    if isVar(Input):
+        strResult = "Var({})".format(Input)
+        Result = Var(Input)
+    elif isConst(Input):
+        strResult = "Const({})".format(Input)
+        Result = Const(Input)
+    else:
+        strResult = Input
+        Result = Input
+    # return strResult
+    return Result
+
+def Operator(Operation, LAction, RAction):
+    if Operation == "*":
+        straction = "Times({},{})".format(LAction,RAction)
+        action = Times(LAction,RAction)
+    elif Operation == "+":
+        straction = "Add({},{})".format(LAction,RAction)
+        action = Add(LAction,RAction)
+    # return straction
+    return action
 
 def FindExpr(s, start = 0 , end = 0, depth = 0):
-    expressions = ['+','-','*',':','|','&','(',')']
+    expressions = ['+','-','*',':','|','&']
     pos = 0
     for expr in s:
         left  = s[:pos]
         right = s[pos+1:]
         opr   = s[pos:pos+1]
 
+        # RIsVar      = isVar(right)
+        # RIsConst    = isConst(right)
+        # RIsExpr     = isExpr(right)
+
+        # LIsVar      = isVar(left)
+        # LIsConst    = isConst(left)
+        # LIsExpr     = isExpr(left)
+
         if right[:1] == "(":
-            left = FindBracket(right)
-            if FindBracket(left) is not None:
-                opr = right[len(left)+2]
-                right = right[len(left)+3:]
-            
+            SubExpr = FindBracket(right)
+            SubExprLen = len(SubExpr)
+            rightLen = len(right)
+            # if 
+            if SubExprLen < rightLen:
+                llen = SubExprLen + 3
+                rlen = (rightLen - (llen))*-1
+                # print ("L_leftpart: {} \t{}\t {} right part".format(SubExpr,opr,right[llen:]))
+                # Find The operation
+                opr = right[SubExprLen+2]
+                
+                wrkRight = Qualify(FindExpr(SubExpr))
+                wrkLeft = Qualify(right[rlen:])
+                # Store operation
+                right = Qualify(Operator(opr,wrkLeft, wrkRight ))
+                print("Type: ", str(type(right)))
+                # Within braces Qualify Right as Expression
+                # RIsVar = isVar(right)
+                # RIsConst = isConst(right)
+                # RIsExpr = isExpr(right)
+
+        if left[:1] == "(":
+            SubExpr = FindBracket(left)
+            SubExprLen = len(SubExpr)
+            leftLen = len(left)
+            if SubExprLen < rightLen:
+                llen = SubExprLen + 3
+                rlen = (rightLen - (llen))*-1
+                print ("R_leftpart: {} \t {} right part".format(SubExpr,left[llen:]))
+                left = FindExpr(SubExpr)
+                opr = left[SubExprLen+2]
+                # right = left[rlen:]
+
+        
+        if expr in expressions:
             print("( opr: {}".format(opr))
             print("( lft: {}".format(left))
             print("( rgt: {}".format(right))
+
+            if right is 'd':
+                print("special:{}\n\tv:{}\tc:{}\te:{}\n".format(right,isVar(right),isConst(right),isExpr(right)))
+
+
+
+            # print("%")
+            # print(" Opr:{}\t".format(opr))
+            # print(" lft:{}\n\tv:{}\tc:{}\te:{}\n".format(left,isVar(left),isConst(left),isExpr(left)))
+            # print(" rgt:{}\n\tv:{}\tc:{}\te:{}\n".format(right,isVar(right),isConst(right),isExpr(right)))
             
+            # Raction = ""
+            # if RIsVar:
+            #     Raction = Var(right)
+            #     # Raction = "Var({})".format(right)
+            # elif RIsConst:
+            #     Raction = Const(right)
+            #     # Raction = "Const({})".format(right)
+            # elif RIsExpr:
+            #     # Raction = FindExpr(right)
+                # if right[:1] == '(':
+                #     SubExpr = FindBracket(right)
+                #     if len(SubExpr) < len(right):
+                #         print ("leftpart: {} \t {} right part".format(SubExpr,right[len(SubExpr)+2:]))
+                # right = FindExpr(right)
+                # Raction = "{}".format(right)
+                # Raction = Qualify(right)
 
-        if expr in expressions:
-            
-            
-            RIsVar      = isVar(right)
-            RIsConst    = isConst(right)
-            RIsExpr     = isExpr(right)
-
-            LIsVar      = isVar(left)
-            LIsConst    = isConst(left)
-            LIsExpr     = isExpr(left)
-
-
-            print("%")
-            print(" Opr:{}\t".format(opr))
-            print(" lft:{}\n\tv:{}\tc:{}\te:{}\n".format(left,isVar(left),isConst(left),isExpr(left)))
-            print(" rgt:{}\n\tv:{}\tc:{}\te:{}\n".format(right,isVar(right),isConst(right),isExpr(right)))
-            
-
-            Raction = ""
-            if RIsVar:
-                # Raction = Var(right)
-                Raction = "Var({})".format(right)
-            elif RIsConst:
-                # Const(right)
-                Raction = "Const({})".format(right)
-            elif RIsExpr:
-                # Raction = FindExpr(right)
-                right = FindExpr(right)
-                Raction = "{}".format(right)
-                # start nesting from here. 
-
-            Laction = ""
-            if LIsVar:
-                # Laction = Var(left)
-                Laction = "Var({})".format(left)
-            elif LIsConst:
-                # Laction = Const(left)
-                Laction = "Const({})".format(left)
-            elif LIsExpr:
-                # Laction = FindExpr(left)
-                left = FindExpr(left)
-                Laction = "{}".format(left)
+            # Laction = ""
+            # if LIsVar:
+            #     Laction = Var(left)
+            #     # Laction = "Var({})".format(left)
+            # elif LIsConst:
+            #     Laction = Const(left)
+            #     # Laction = "Const({})".format(left)
+            # elif LIsExpr:
+            #     # Laction = FindExpr(left)
+            #     # left = FindExpr(left)
+            #     # Laction = "{}".format(left)
+            #     Laction = Qualify(left)
                 # start nesting from here. 
             
 
-            action = ""
-            if opr == "*":
-                action = "Times({},{})".format(Laction,Raction)
-                # action = Times(Laction,Raction)
-            elif opr == "+":
-                action = "Add({},{})".format(Laction,Raction)
-                # action = Add(Laction,Raction)
+            action = Operator(opr,Qualify(left),Qualify(right))
            
-           
-            # print(FindExpr(right))
-
-            # print("E:{}\t L:{} \t R:{} ".format(opr,left,right))
-            
             return action
-
-        # elif expr in brackets:
-           
-            # return FindExpr(FindBracket(s[pos:]))
-           
-
         pos += 1
 
 
-env = { "a" : 2, "b" : 4, "c" : 5, "d" : 3}
+env = { "a" : 1, "b" : 2, "c" : 4, "d" : 8, "e" : 9, "f":10}
 for s in rules:
     # print("s:'{}'\t\t -> {}".format(s,FindBracket(s)))
-    print("s:'{}'\t\t -> {}".format(s,FindExpr(s)) )
+    print("s:'{}'\t\t -> {}".format(s,FindExpr(s).eval(env)) )
     # print(parts)
     print("---")
 
