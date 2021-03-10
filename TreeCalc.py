@@ -4,9 +4,8 @@ import re
 
 
 ruleLine = "long+(short+extended_a)"
-# rules = ["1*(2+(4+8)+9)*10"]
-rules = ["a+a*(b+(c+d)+e)*f"]
-
+rules = ["a+a*(b+(c+d))*f","a+b","(a+b)","(a+b)+c","a+(b+c)","a+b+c","a+(b+(c+(d*f)))+a", "a+((b+a)+a)"]
+# rules = []
 
 rule = re.split(r"(\W)",ruleLine)
 
@@ -47,7 +46,7 @@ class Const (Expr):
 
 class Var (Expr):
     def __init__(self,name) :
-        self.name = name
+        self.name = name.strip(")")
     
     def __str__(self) :
         return self.name
@@ -56,6 +55,8 @@ class Var (Expr):
         return env[self.name]
 
 def isExpr(field) :
+    if field is None:
+        return False
     if not isinstance(field,str):
         return False
     if re.search("[\+\-\*\:\|\&\!\^]", field) :
@@ -63,15 +64,15 @@ def isExpr(field) :
     return False
 
 def isVar(field) :
-    # if isinstance(field,Expr):
-    #     return False
+    if field is None:
+        return False
     if re.search("^[a-zA-Z]", field) and not isExpr(field) : 
         return True
     return False
 
 def isConst(field):
-    # if isinstance(field,Expr):
-    #     return False
+    if field is None:
+        return False
     if re.search("^([-+]|[0-9])", field) and not isExpr(field) : 
         return True
     return False
@@ -95,7 +96,7 @@ def FindBracket(s,depth = 0, pos = 0, end = 0):
 
                 end = pos
                 if ( depth == 0 ):
-                    # print(pre, "/from:{}\t to:{}\t s:{}\t -> {}".format(start,end,s,s[start:end]))
+                    print(pre, "/from:{}\t to:{}\t s:{}\t -> {}".format(start,end,s,s[start:end]))
                     # return FindBracket(s[start:end] )
                     return s[start:end]
 
@@ -137,7 +138,7 @@ def FindExpr(s, start = 0 , end = 0, depth = 0):
             SubExprLen = len(SubExpr)
             rightLen = len(right)
             # if 
-            if SubExprLen < rightLen:
+            if SubExprLen < (rightLen-2):
                 llen = SubExprLen + 3
                 rlen = (rightLen - (llen))*-1
                 # Find The operation
@@ -145,21 +146,33 @@ def FindExpr(s, start = 0 , end = 0, depth = 0):
                 
                 wrkRight = Qualify(FindExpr(SubExpr))
                 wrkLeft = Qualify(right[rlen:])
-                # Store operation
-                right = Qualify(Operator(opr,wrkLeft, wrkRight ))
+                if isinstance(wrkLeft,str):
+                    if wrkLeft.startswith("("):
+                        right = Qualify(FindExpr(FindBracket(right[rlen:])))
+                        opr   = s[pos:pos+1]
+                    else:
+                        right = Qualify(Operator(opr,wrkLeft, wrkRight ))    
+                else:
+                    # Store operation
+                    right = Qualify(Operator(opr,wrkLeft, wrkRight ))
+                print(right)
 
 
-        if left[:1] == "(":
-            SubExpr = FindBracket(left)
-            SubExprLen = len(SubExpr)
-            leftLen = len(left)
-            if SubExprLen < rightLen:
-                llen = SubExprLen + 3
-                rlen = (rightLen - (llen))*-1
-                print ("R_leftpart: {} \t {} right part".format(SubExpr,left[llen:]))
-                left = FindExpr(SubExpr)
-                opr = left[SubExprLen+2]
-                # right = left[rlen:]
+        if left[:1] == "(" and len(left) >= 2:
+            left = left[1:]
+            # SubExprLen = len(SubExpr)
+            # leftLen = len(left)
+            # # if 
+            # if SubExprLen < (leftLen-2):
+            #     llen = SubExprLen + 3
+            #     rlen = (leftLen - (llen))*-1
+            #     # Find The operation
+            #     opr = right[SubExprLen+2]
+                
+            #     wrkRight = Qualify(FindExpr(SubExpr))
+            #     wrkLeft = Qualify(right[rlen:])
+            #     # Store operation
+            #     left = Qualify(Operator(opr,wrkLeft, wrkRight ))
 
         
         if expr in expressions:
